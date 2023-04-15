@@ -3,8 +3,8 @@ use std::process::Command;
 
 pub fn checkout_commit(commit: &String, args: &Args) {
     base_git_command(&args)
-        .arg("checkout")
-        .arg(commit)
+        .args(["-c", "advice.detachedHead=false"])
+        .args(["checkout", commit])
         .status()
         .unwrap();
 }
