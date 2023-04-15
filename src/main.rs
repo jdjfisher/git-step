@@ -1,10 +1,10 @@
-use console::{Term, Key};
+use console::{Key, Term};
 
 pub mod git;
 
 fn main() {
     let commits = git::get_commits();
-    
+
     let stdout = Term::buffered_stdout();
 
     let mut index = 0;
@@ -17,14 +17,14 @@ fn main() {
                         index -= 1;
                         git::checkout_commit(&commits[index]);
                     }
-                },
+                }
                 Key::ArrowRight => {
-                    if index < commits.len() -1 {
+                    if index < commits.len() - 1 {
                         index += 1;
                         git::checkout_commit(&commits[index]);
                     }
-                },
-                _ => break 
+                }
+                _ => break,
             }
         }
     }
