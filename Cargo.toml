@@ -2,6 +2,14 @@
 name = "git-step"
 version = "0.1.0"
 edition = "2021"
+authors = ["Jordan Fisher <jdjfisher@outlook.com>"]
+license = "MIT"
+description = "A tool to step through git commits"
+readme = "README.md"
+homepage = "https://github.com/jdjfisher/git-step"
+repository = "https://github.com/jdjfisher/git-step"
+keywords = ["cli", "git", "commit"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
