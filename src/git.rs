@@ -1,10 +1,10 @@
 use crate::Args;
 use std::process::Command;
 
-pub fn checkout_commit(commit: &String, args: &Args) {
+pub fn checkout_target(target: &String, args: &Args) {
     base_git_command(&args)
         .args(["-c", "advice.detachedHead=false"])
-        .args(["checkout", commit])
+        .args(["checkout", target])
         .status()
         .unwrap();
 }
@@ -12,7 +12,7 @@ pub fn checkout_commit(commit: &String, args: &Args) {
 pub fn get_commits(args: &Args) -> Vec<String> {
     let output = base_git_command(&args)
         .arg("rev-list")
-        .arg(&args.head)
+        .arg(&args.target)
         .arg("--reverse")
         .output()
         .unwrap();
