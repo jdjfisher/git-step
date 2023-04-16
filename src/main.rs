@@ -34,13 +34,27 @@ fn main() -> Result<(), io::Error> {
     let args = Args::parse();
     let term = Term::stdout();
 
-    let commits = git::get_commits(&args);
-    let mut index = commits.len() - 1;
+    move_head(&term, &args, &args.target)?;
     let mut steps = 1;
 
-    move_head(&term, &args, &args.target)?;
+    let loop_result = step_loop(&term, &args, &mut steps);
 
-    // TODO: Tidy
+    // Always try to reset the head after breaking the loop
+    reset_head(&term, &args, steps)?;
+
+    loop_result
+}
+
+fn move_head(term: &Term, args: &Args, head: &String) -> Result<(), io::Error> {
+    term.clear_screen()?;
+    git::checkout_target(head, args)?; // TODO: Check the exit status?
+    Ok(())
+}
+
+fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<(), io::Error> {
+    let commits = git::get_commits(&args)?;
+    let mut index = commits.len() - 1;
+
     loop {
         if let Ok(character) = term.read_key() {
             match character {
@@ -48,14 +62,14 @@ fn main() -> Result<(), io::Error> {
                     if index > 1 {
                         index -= 1;
                         move_head(&term, &args, &commits[index])?;
-                        steps += 1;
+                        *steps += 1;
                     }
                 }
                 Key::ArrowRight => {
                     if index < commits.len() - 1 {
                         index += 1;
                         move_head(&term, &args, &commits[index])?;
-                        steps += 1;
+                        *steps += 1;
                     }
                 }
                 _ => break,
@@ -63,14 +77,6 @@ fn main() -> Result<(), io::Error> {
         }
     }
 
-    reset_head(&term, &args, steps)?;
-
-    Ok(())
-}
-
-fn move_head(term: &Term, args: &Args, head: &String) -> Result<(), io::Error> {
-    term.clear_screen()?;
-    git::checkout_target(head, args);
     Ok(())
 }
 
