@@ -17,6 +17,10 @@ pub struct Args {
     /// Path
     #[arg(short, long)]
     directory: Option<PathBuf>,
+
+    /// Verbose
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
