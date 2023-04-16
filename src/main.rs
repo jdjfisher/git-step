@@ -1,6 +1,6 @@
 use clap::{Parser, ValueEnum};
 use console::{Key, Term};
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
 
 pub mod git;
 
@@ -30,31 +30,31 @@ enum HeadMode {
     Final,
 }
 
-fn main() {
+fn main() -> Result<(), io::Error> {
     let args = Args::parse();
-    let stdout = Term::buffered_stdout();
+    let term = Term::stdout();
 
     let commits = git::get_commits(&args);
     let mut index = commits.len() - 1;
     let mut steps = 1;
 
-    git::checkout_target(&args.target, &args);
+    move_head(&term, &args, &args.target)?;
 
     // TODO: Tidy
     loop {
-        if let Ok(character) = stdout.read_key() {
+        if let Ok(character) = term.read_key() {
             match character {
                 Key::ArrowLeft => {
                     if index > 1 {
                         index -= 1;
-                        git::checkout_target(&commits[index], &args);
+                        move_head(&term, &args, &commits[index])?;
                         steps += 1;
                     }
                 }
                 Key::ArrowRight => {
                     if index < commits.len() - 1 {
                         index += 1;
-                        git::checkout_target(&commits[index], &args);
+                        move_head(&term, &args, &commits[index])?;
                         steps += 1;
                     }
                 }
@@ -63,17 +63,21 @@ fn main() {
         }
     }
 
-    reset_head(args, steps);
+    reset_head(&term, &args, steps)?;
+
+    Ok(())
 }
 
-fn reset_head(args: Args, steps: i32) {
+fn move_head(term: &Term, args: &Args, head: &String) -> Result<(), io::Error> {
+    term.clear_screen()?;
+    git::checkout_target(head, args);
+    Ok(())
+}
+
+fn reset_head(term: &Term, args: &Args, steps: i32) -> Result<(), io::Error> {
     match args.head {
-        HeadMode::Target => {
-            git::checkout_target(&args.target, &args);
-        }
-        HeadMode::Original => {
-            git::checkout_target(&format!("@{{-{}}}", steps), &args);
-        }
-        HeadMode::Final => {}
+        HeadMode::Target => move_head(term, args, &args.target),
+        HeadMode::Original => move_head(term, args, &format!("@{{-{}}}", steps)),
+        HeadMode::Final => Ok(()),
     }
 }
