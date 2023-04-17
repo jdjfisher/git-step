@@ -1,10 +1,8 @@
 use crate::Args;
-use std::{
-    io,
-    process::{Command, Stdio},
-};
+use anyhow::{bail, Result};
+use std::process::{Command, Stdio};
 
-pub fn checkout_target(target: &String, args: &Args) -> Result<(), io::Error> {
+pub fn checkout_target(target: &String, args: &Args) -> Result<()> {
     let status = base_git_command(&args)
         .args(["-c", "advice.detachedHead=false"])
         .args(["checkout", target])
@@ -12,21 +10,22 @@ pub fn checkout_target(target: &String, args: &Args) -> Result<(), io::Error> {
         .status()?;
 
     if !status.success() {
-        panic!("checkout failed");
+        bail!("checkout failed");
     }
 
     Ok(())
 }
 
-pub fn get_commits(args: &Args) -> Result<Vec<String>, io::Error> {
+pub fn get_commits(args: &Args) -> Result<Vec<String>> {
     let output = base_git_command(&args)
         .arg("rev-list")
         .arg(&args.target)
         .arg("--reverse")
         .output()?;
 
+    // TODO: Inherit stderr?
     if !output.status.success() {
-        panic!("failed to load commits");
+        bail!("failed to load commits");
     }
 
     let raw = String::from_utf8_lossy(&output.stdout);

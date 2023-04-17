@@ -1,6 +1,7 @@
+use anyhow::Result;
 use clap::{Parser, ValueEnum};
 use console::{Key, Term};
-use std::{io, path::PathBuf};
+use std::path::PathBuf;
 
 pub mod git;
 
@@ -30,7 +31,7 @@ enum HeadMode {
     Final,
 }
 
-fn main() -> Result<(), io::Error> {
+fn main() -> Result<()> {
     let args = Args::parse();
     let term = Term::stdout();
 
@@ -45,13 +46,13 @@ fn main() -> Result<(), io::Error> {
     loop_result
 }
 
-fn move_head(term: &Term, args: &Args, head: &String) -> Result<(), io::Error> {
+fn move_head(term: &Term, args: &Args, head: &String) -> Result<()> {
     term.clear_screen()?;
     git::checkout_target(head, args)?; // TODO: Check the exit status?
     Ok(())
 }
 
-fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<(), io::Error> {
+fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<()> {
     let commits = git::get_commits(&args)?;
     let mut index = commits.len() - 1;
 
@@ -80,7 +81,7 @@ fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<(), io::Error>
     Ok(())
 }
 
-fn reset_head(term: &Term, args: &Args, steps: i32) -> Result<(), io::Error> {
+fn reset_head(term: &Term, args: &Args, steps: i32) -> Result<()> {
     match args.head {
         HeadMode::Target => move_head(term, args, &args.target),
         HeadMode::Original => move_head(term, args, &format!("@{{-{}}}", steps)),
