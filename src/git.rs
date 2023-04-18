@@ -23,8 +23,8 @@ pub fn get_commits(args: &Args) -> Result<Vec<String>> {
         .arg("--reverse")
         .output()?;
 
-    // TODO: Inherit stderr?
     if !output.status.success() {
+        eprint!("{}", String::from_utf8_lossy(&output.stderr));
         bail!("failed to load commits");
     }
 
