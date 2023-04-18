@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use console::{Key, Term};
 use std::path::PathBuf;
 
@@ -9,47 +9,48 @@ pub mod git;
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     /// Target branch or commit to step back from
+    #[arg(default_value_t = String::from("HEAD"))]
     target: String,
 
-    /// Mode for resetting the HEAD on exit
-    #[arg(long, value_enum, default_value_t = HeadMode::Original)]
-    head: HeadMode,
-
-    /// Path
+    /// Reset HEAD to original position on exit
     #[arg(short, long)]
-    directory: Option<PathBuf>,
+    reset_head: bool,
+
+    /// Run as if git was started in <path>
+    #[arg(short = 'C')]
+    path: Option<PathBuf>,
 
     /// Verbose
     #[arg(short, long)]
     verbose: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
-enum HeadMode {
-    Target,
-    Original,
-    Final,
-}
-
 fn main() -> Result<()> {
     let args = Args::parse();
     let term = Term::stdout();
 
-    move_head(&term, &args, &args.target)?;
-    let mut steps = 1;
+    let mut steps = 0;
 
+    // Move head to the target
+    if args.target != "HEAD" {
+        move_head(&term, &args, &args.target)?;
+        steps += 1;
+    }
+
+    // Step...
     let loop_result = step_loop(&term, &args, &mut steps);
 
-    // Always try to reset the head after breaking the loop
-    reset_head(&term, &args, steps)?;
+    // Try resetting the head regardless of loop Result
+    if args.reset_head {
+        reset_head(&term, &args, steps)?;
+    }
 
     loop_result
 }
 
 fn move_head(term: &Term, args: &Args, head: &String) -> Result<()> {
     term.clear_screen()?;
-    git::checkout_target(head, args)?; // TODO: Check the exit status?
-    Ok(())
+    git::checkout_target(head, args)
 }
 
 fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<()> {
@@ -82,9 +83,7 @@ fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<()> {
 }
 
 fn reset_head(term: &Term, args: &Args, steps: i32) -> Result<()> {
-    match args.head {
-        HeadMode::Target => move_head(term, args, &args.target),
-        HeadMode::Original => move_head(term, args, &format!("@{{-{}}}", steps)),
-        HeadMode::Final => Ok(()),
-    }
+    let reflog_id = format!("@{{-{}}}", steps);
+
+    move_head(term, args, &reflog_id)
 }

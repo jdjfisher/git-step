@@ -14,7 +14,7 @@ fn displays_help_prompt() {
         .assert()
         .success()
         .stdout(predicate::str::contains(
-            "Usage: git-step [OPTIONS] <TARGET>",
+            "Usage: git-step [OPTIONS] [TARGET]",
         ));
 }
 
@@ -27,7 +27,7 @@ fn propagates_missing_git_repository_error() {
     Command::cargo_bin("git-step")
         .unwrap()
         .arg("main")
-        .args(["-d", temp_dir.to_str().unwrap()])
+        .args(["-C", temp_dir.to_str().unwrap()])
         .assert()
         .failure()
         .code(1)

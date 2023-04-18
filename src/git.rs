@@ -36,7 +36,7 @@ pub fn get_commits(args: &Args) -> Result<Vec<String>> {
 fn base_git_command(args: &Args) -> Command {
     let mut command = Command::new("git");
 
-    if let Some(path) = &args.directory {
+    if let Some(path) = &args.path {
         command.args(["-C", path.to_str().expect("invalid path")]);
     }
 
