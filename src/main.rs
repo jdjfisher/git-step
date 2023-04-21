@@ -60,14 +60,14 @@ fn step_loop(term: &Term, args: &Args, steps: &mut i32) -> Result<()> {
     loop {
         if let Ok(character) = term.read_key() {
             match character {
-                Key::ArrowLeft => {
+                Key::Char('a') | Key::ArrowLeft => {
                     if index > 1 {
                         index -= 1;
                         move_head(&term, &args, &commits[index])?;
                         *steps += 1;
                     }
                 }
-                Key::ArrowRight => {
+                Key::Char('d') | Key::ArrowRight => {
                     if index < commits.len() - 1 {
                         index += 1;
                         move_head(&term, &args, &commits[index])?;
