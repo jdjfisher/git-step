@@ -1,11 +1,11 @@
-use std::{fs::read_dir, process::ExitCode};
-
+use assert_cmd::cargo::cargo_bin;
 use assert_cmd::Command;
 use assert_fs::{
     prelude::{PathAssert, PathChild},
     TempDir,
 };
 use predicates::{prelude::*, str::contains};
+use rexpect::process::wait::WaitStatus;
 
 mod common;
 
@@ -66,6 +66,31 @@ fn it_moves_head_to_target() {
         .args(["-C", temp_dir.to_str().unwrap()])
         .assert()
         .success();
+
+    temp_dir.child("README.md").assert("Foo bar");
+}
+
+#[test]
+fn it_can_step_the_head_back_and_exit() {
+    let temp_dir = common::setup_temp_git_repository();
+
+    temp_dir.child("README.md").assert("Fizz buzz");
+
+    let command = format!(
+        "{} -C {}",
+        cargo_bin("git-step").to_str().unwrap(),
+        temp_dir.to_str().unwrap()
+    );
+
+    let mut session = rexpect::spawn(command.as_str(), Some(10_000)).unwrap();
+
+    session.send("a").unwrap();
+    session.send("q").unwrap();
+    session.flush().unwrap();
+
+    let status = session.process.wait().unwrap();
+
+    assert!(matches!(status, WaitStatus::Exited(_, 0)));
 
     temp_dir.child("README.md").assert("Foo bar");
 }
