@@ -1,3 +1,4 @@
+use assert_cmd::prelude::OutputAssertExt;
 use assert_fs::{
     prelude::{FileWriteStr, PathAssert, PathChild},
     TempDir,
@@ -5,18 +6,12 @@ use assert_fs::{
 use std::process::Command;
 
 fn run_git_command(dir: &TempDir, subcommand: &str, args: Vec<&str>) {
-    let output = Command::new("git")
+    Command::new("git")
         .current_dir(&dir)
         .arg(subcommand)
         .args(args)
-        .output()
-        .unwrap();
-
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stdout)
-    );
+        .assert()
+        .success();
 }
 
 // TODO: Tidy, builder pattern?

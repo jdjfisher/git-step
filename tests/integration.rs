@@ -45,12 +45,12 @@ fn propagates_invalid_git_target_error() {
     Command::cargo_bin("git-step")
         .unwrap()
         .args(["-C", temp_dir.to_str().unwrap()])
-        .arg("master")
+        .arg("lorem")
         .assert()
         .failure()
         .code(1)
         .stderr(contains(
-            "error: pathspec \'master\' did not match any file(s) known to git",
+            "error: pathspec \'lorem\' did not match any file(s) known to git",
         ));
 }
 
