@@ -1,9 +1,38 @@
-use assert_cmd::prelude::OutputAssertExt;
+use assert_cmd::{
+    assert::Assert,
+    prelude::{CommandCargoExt, OutputAssertExt},
+};
 use assert_fs::{
     prelude::{FileWriteStr, PathAssert, PathChild},
     TempDir,
 };
-use std::process::Command;
+use rexpect::session::PtySession;
+use std::{ffi::OsStr, process::Command};
+
+pub struct GitStep {
+    command: Command,
+}
+
+impl GitStep {
+    pub fn make(dir: &TempDir) -> Self {
+        let mut command = Command::cargo_bin("git-step").unwrap();
+        command.current_dir(dir);
+        Self { command }
+    }
+
+    pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Self {
+        self.command.arg(arg.as_ref());
+        self
+    }
+
+    pub fn interactive(self) -> PtySession {
+        rexpect::session::spawn_command(self.command, Some(10_000)).unwrap()
+    }
+
+    pub fn non_interactive(&mut self) -> Assert {
+        self.command.assert()
+    }
+}
 
 fn run_git_command(dir: &TempDir, subcommand: &str, args: Vec<&str>) {
     Command::new("git")

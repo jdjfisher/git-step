@@ -1,5 +1,3 @@
-use assert_cmd::cargo::cargo_bin;
-use assert_cmd::Command;
 use assert_fs::{
     prelude::{PathAssert, PathChild},
     TempDir,
@@ -7,14 +5,17 @@ use assert_fs::{
 use predicates::{prelude::*, str::contains};
 use rexpect::process::wait::WaitStatus;
 
+use crate::common::GitStep;
+
 mod common;
 
 #[test]
 fn displays_help_prompt() {
-    Command::cargo_bin("git-step")
-        .unwrap()
+    let temp_dir = TempDir::new().unwrap();
+
+    GitStep::make(&temp_dir)
         .arg("--help")
-        .assert()
+        .non_interactive()
         .success()
         .stdout(predicate::str::contains(
             "Usage: git-step [OPTIONS] [TARGET]",
@@ -27,10 +28,8 @@ fn propagates_missing_git_repository_error() {
 
     temp_dir.child(".git").assert(predicate::path::missing());
 
-    Command::cargo_bin("git-step")
-        .unwrap()
-        .args(["-C", temp_dir.to_str().unwrap()])
-        .assert()
+    GitStep::make(&temp_dir)
+        .non_interactive()
         .failure()
         .code(1)
         .stderr(contains(
@@ -42,11 +41,9 @@ fn propagates_missing_git_repository_error() {
 fn propagates_invalid_git_target_error() {
     let temp_dir = common::setup_temp_git_repository();
 
-    Command::cargo_bin("git-step")
-        .unwrap()
-        .args(["-C", temp_dir.to_str().unwrap()])
+    GitStep::make(&temp_dir)
         .arg("lorem")
-        .assert()
+        .non_interactive()
         .failure()
         .code(1)
         .stderr(contains(
@@ -60,11 +57,9 @@ fn it_moves_head_to_target() {
 
     temp_dir.child("README.md").assert("Fizz buzz");
 
-    Command::cargo_bin("git-step")
-        .unwrap()
+    GitStep::make(&temp_dir)
         .arg("@~1")
-        .args(["-C", temp_dir.to_str().unwrap()])
-        .assert()
+        .non_interactive()
         .success();
 
     temp_dir.child("README.md").assert("Foo bar");
@@ -76,15 +71,13 @@ fn it_can_step_the_head_back_and_exit() {
 
     temp_dir.child("README.md").assert("Fizz buzz");
 
-    let command = format!(
-        "{} -C {}",
-        cargo_bin("git-step").to_str().unwrap(),
-        temp_dir.to_str().unwrap()
-    );
-
-    let mut session = rexpect::spawn(command.as_str(), Some(10_000)).unwrap();
+    let mut session = GitStep::make(&temp_dir).interactive();
 
     session.send("a").unwrap();
+    session.flush().unwrap();
+
+    session.exp_regex("HEAD is now at \\w{7} edited").unwrap();
+
     session.send("q").unwrap();
     session.flush().unwrap();
 
