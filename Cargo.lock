@@ -277,6 +277,7 @@ dependencies = [
  "assert_fs",
  "clap",
  "console",
+ "once_cell",
  "predicates",
  "rexpect",
 ]

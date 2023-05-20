@@ -57,12 +57,17 @@ fn it_moves_head_to_target() {
 
     temp_dir.child("README.md").assert("Fizz buzz");
 
-    GitStep::make(&temp_dir)
-        .arg("@~1")
-        .non_interactive()
-        .success();
+    let mut session = GitStep::make(&temp_dir).arg("@~1").interactive();
+
+    session.exp_regex("HEAD is now at \\w{7} edited").unwrap();
 
     temp_dir.child("README.md").assert("Foo bar");
+
+    session.send("q").unwrap();
+    session.flush().unwrap();
+
+    let status = session.process.wait().unwrap();
+    assert!(matches!(status, WaitStatus::Exited(_, 0)));
 }
 
 #[test]
@@ -82,7 +87,6 @@ fn it_can_step_the_head_back_and_exit() {
     session.flush().unwrap();
 
     let status = session.process.wait().unwrap();
-
     assert!(matches!(status, WaitStatus::Exited(_, 0)));
 
     temp_dir.child("README.md").assert("Foo bar");

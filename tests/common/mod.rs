@@ -20,7 +20,7 @@ impl GitStep {
         Self { command }
     }
 
-    pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Self {
+    pub fn arg<S: AsRef<OsStr>>(mut self, arg: S) -> Self {
         self.command.arg(arg.as_ref());
         self
     }
