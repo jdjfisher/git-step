@@ -1,4 +1,4 @@
-use std::io;
+use std::io::Write;
 
 use anyhow::Result;
 use console::{Key, Style, Term};
@@ -61,7 +61,7 @@ pub fn start(term: &mut Term, args: &Args, steps: &mut i32) -> Result<()> {
     let commits = git::get_commits(&args)?;
     let mut index = commits.len() - 1;
 
-    display_menu(term)?;
+    display_menu(term, args)?;
 
     loop {
         if let Ok(character) = term.read_key() {
@@ -80,7 +80,7 @@ pub fn start(term: &mut Term, args: &Args, steps: &mut i32) -> Result<()> {
                         *steps += 1;
                     }
                 }
-                Key::Char('h') => display_menu(term)?,
+                Key::Char('h') => display_menu(term, args)?,
                 Key::Char('c') => term.clear_screen()?,
                 Key::Char('q') => break,
                 _ => continue,
@@ -91,16 +91,16 @@ pub fn start(term: &mut Term, args: &Args, steps: &mut i32) -> Result<()> {
     Ok(())
 }
 
-fn display_menu(term: &mut Term) -> io::Result<()> {
+fn display_menu(term: &mut Term, args: &Args) -> Result<()> {
     term.clear_screen()?;
 
-    term.write_line(
-        STYLES
-            .title
-            .apply_to(format!("{} {}\n", NAME, VERSION))
-            .to_string()
-            .as_str(),
-    )?;
+    let head = git::parse_head(args)?;
+
+    term.write_fmt(format_args!(
+        "{} {}\n\n",
+        STYLES.title.apply_to([NAME, VERSION].join(" ")),
+        STYLES.secondary.apply_to(head),
+    ))?;
 
     for action in ACTIONS.iter() {
         term.write_line(action.get_prompt().as_str())?

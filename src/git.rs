@@ -1,5 +1,6 @@
 use crate::Args;
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
+use regex::Regex;
 use std::process::{Command, Stdio};
 
 pub fn checkout_target(target: &String, args: &Args) -> Result<()> {
@@ -31,6 +32,27 @@ pub fn get_commits(args: &Args) -> Result<Vec<String>> {
     let raw = String::from_utf8_lossy(&output.stdout);
 
     Ok(raw.lines().map(|s| s.to_string()).collect())
+}
+
+pub fn parse_head(args: &Args) -> Result<String> {
+    let output = base_git_command(&args).arg("branch").output()?;
+
+    if !output.status.success() {
+        eprint!("{}", String::from_utf8_lossy(&output.stderr));
+        bail!("failed to parse head");
+    }
+
+    let pattern = Regex::new(r"\* (.*)").unwrap();
+
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .find_map(|line| {
+            pattern
+                .captures(line)
+                .map(|captures| captures[1].to_string())
+        })
+        .ok_or(anyhow!("failed to parse head"))
 }
 
 fn base_git_command(args: &Args) -> Command {
