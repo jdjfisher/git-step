@@ -39,7 +39,7 @@ static ACTIONS: Lazy<[Action; 5]> = Lazy::new(|| {
 impl Action {
     fn new(keybind: &str, description: &str) -> Self {
         Self {
-            keybind,
+            keybind: keybind.to_string(),
             description: description.to_string(),
         }
     }
