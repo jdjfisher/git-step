@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use crate::{git, Args};
 
 struct Action {
-    keybind: char,
+    keybind: String,
     description: String,
 }
 
@@ -28,16 +28,16 @@ static STYLES: Lazy<Styles> = Lazy::new(|| Styles {
 
 static ACTIONS: Lazy<[Action; 5]> = Lazy::new(|| {
     [
-        Action::new('h', "show help"),
-        Action::new('a', "step back"),
-        Action::new('d', "step forward"),
-        Action::new('c', "clear console"),
-        Action::new('q', "exit"),
+        Action::new("h", "show help"),
+        Action::new("a or left arrow", "step back"),
+        Action::new("d or right arrow", "step forward"),
+        Action::new("c", "clear console"),
+        Action::new("q", "exit"),
     ]
 });
 
 impl Action {
-    fn new(keybind: char, description: &str) -> Self {
+    fn new(keybind: &str, description: &str) -> Self {
         Self {
             keybind,
             description: description.to_string(),
