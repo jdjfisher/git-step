@@ -5,6 +5,8 @@
 
 Interactive CLI tool for stepping through git commits.
 
+![Demo](demo.gif)
+
 ## Installation
 
 You can install `git-step` using Cargo, the Rust package manager.
